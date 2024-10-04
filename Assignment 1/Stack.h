@@ -16,7 +16,9 @@ public:
     // Pop a character from the stack
     char pop() {
         if (top == nullptr) {
-            // not sure how to handle underflow here
+            std::cerr << "Stack underflow\n";
+            return '\0';
+
         }
         char ch = top->data;
         Node* temp = top;
