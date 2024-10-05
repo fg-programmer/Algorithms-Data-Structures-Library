@@ -1,4 +1,9 @@
 // Stack class definition
+
+#include "Node.h"
+#include <iostream>
+
+
 class Stack {
 private:
     Node* top; // Points to the top node of the stack

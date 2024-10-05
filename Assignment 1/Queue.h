@@ -1,4 +1,7 @@
 // Queue class definition
+#include "Node.h"
+#include <iostream>
+
 class Queue {
 private:
     Node* front; // Points to the front node of the queue
