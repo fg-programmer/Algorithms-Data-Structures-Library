@@ -1,4 +1,6 @@
 // Stack class definition
+#ifndef STACK_H
+#define STACK_H
 
 #include "Node.h"
 #include <iostream>
@@ -37,3 +39,4 @@ public:
         return top == nullptr;
     }
 };
+#endif

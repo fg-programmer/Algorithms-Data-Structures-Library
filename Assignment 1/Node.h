@@ -1,3 +1,6 @@
+#ifndef NODE_H
+#define NODE_H
+
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -14,3 +17,4 @@ public:
     // Constructor to initialize a node with data
     Node(char d) : data(d), next(nullptr) {}
 };
+#endif

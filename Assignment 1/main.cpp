@@ -5,9 +5,9 @@
 #include "Palindrome.h"
 
 int main() {
-    std::ifstream inputFile("magictexts.txt");
+    std::ifstream inputFile("magicitems.txt");
     if (!inputFile) {
-        std::cerr << "Error: Unable to open file magictexts.txt\n";
+        std::cerr << "Error: Unable to open file magicitems.txt\n";
         return 1;
     }
 
