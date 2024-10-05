@@ -117,17 +117,37 @@ int mergeSort(std::vector<std::string>& arr) {
     return mergeSortHelper(arr, temp, 0, arr.size() - 1);
 }
 
+
 int partition(std::vector<std::string>& arr, std::size_t low, std::size_t high, int& comparisons) {
-    std::string pivot = arr[high];  // Pivot
-    std::size_t i = low - 1;  // Index of smaller element
+    std::string pivot = arr[high];  // Pivot is the last element
+    std::size_t i = low;  // Start `i` from `low`
 
     for (std::size_t j = low; j < high; j++) {
         comparisons++;
         if (arr[j] <= pivot) {
-            i++;
-            std::swap(arr[i], arr[j]);
+            std::swap(arr[i], arr[j]);  // Swap if current element is smaller than the pivot
+            i++;  // 
         }
     }
-    std::swap(arr[i + 1], arr[high]);
-    return i + 1;
+    std::swap(arr[i], arr[high]);  // Place pivot element at its correct sorted position
+    return i; 
+}
+
+int quickSortHelper(std::vector<std::string>& arr, std::size_t low, std::size_t high) {
+    int comparisons = 0;
+
+    if (low < high && high < arr.size()) {  
+        // Partition the array and get the partitioning index
+        std::size_t pi = partition(arr, low, high, comparisons);
+
+        // Recursively sort elements before and after partition
+        comparisons += quickSortHelper(arr, low, pi > 0 ? pi - 1 : 0);  // Protect against underflow
+        comparisons += quickSortHelper(arr, pi + 1, high);
+    }
+
+    return comparisons;
+}
+
+int quickSort(std::vector<std::string>& arr) {
+    return quickSortHelper(arr, 0, arr.size() - 1);
 }

@@ -56,6 +56,6 @@ int main() {
     knuthShuffle(itemsToSort); // Shuffle before sorting
     int quickComparisons = quickSort(itemsToSort);
     std::cout << "Quick Sort comparisons: " << quickComparisons << '\n';
-
+    
     return 0;
 }
