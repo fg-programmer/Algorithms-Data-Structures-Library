@@ -1,0 +1,424 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{caption}
+
+\title{Palindrome Checker and Sorting Algorithms}
+\author{Fitsum Gelaye}
+\date{October 4, 2024}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+This document presents the  analysis of a list of magic items which are being filtered to identify specific palindromes in every element of the list, if there is one. The document also presents the implementation of several sorting algorithms which are being used to sort the list after it has been shuffled into a random sequence. The ultimate purpose is to find which sorting mechanism has the best performance on average.
+
+\section{Stack Implementation (Stack.h)}
+
+
+\begin{lstlisting}[language=C++, caption={Stack.h: Custom Stack Implementation}, numbers=left]
+#ifndef STACK_H
+#define STACK_H
+
+#include <iostream>
+#include <vector>
+
+template<typename T>
+class Stack {
+private:
+    std::vector<T> elements;
+
+public:
+    void push(const T& item) {
+        elements.push_back(item);
+    }
+
+    void pop() {
+        if (!elements.empty()) {
+            elements.pop_back();
+        }
+    }
+
+    T top() const {
+        if (!elements.empty()) {
+            return elements.back();
+        }
+        throw std::out_of_range("Stack is empty");
+    }
+
+    bool empty() const {
+        return elements.empty();
+    }
+};
+#endif
+
+
+**Explanation:
+- **Line 9-11: The `push` function adds an item to the top of the stack by appending it to the end of the vector.
+- **Line 13-15: The `pop` function removes the top element from the stack by popping the last element from the vector.
+- **Line 17-20: The `top` function returns the last element (top of the stack). If the stack is empty, it throws an exception.
+- **Line 22-23: The `empty` function checks if the stack is empty.
+\end{lstlisting}
+
+\section{Queue Implementation (Queue.h)}
+
+
+\begin{lstlisting}[language=C++, caption={Queue.h: Custom Queue Implementation}, numbers=left]
+#ifndef QUEUE_H
+#define QUEUE_H
+
+#include <iostream>
+#include <deque>
+
+template<typename T>
+class Queue {
+private:
+    std::deque<T> elements;
+
+public:
+    void enqueue(const T& item) {
+        elements.push_back(item);
+    }
+
+    void dequeue() {
+        if (!elements.empty()) {
+            elements.pop_front();
+        }
+    }
+
+    T front() const {
+        if (!elements.empty()) {
+            return elements.front();
+        }
+        throw std::out_of_range("Queue is empty");
+    }
+
+    bool empty() const {
+        return elements.empty();
+    }
+};
+#endif
+
+
+**Explanation:**
+- **Line 9-11: The `enqueue` function adds an item to the back of the queue by pushing it to the end of the dequeue.
+- **Line 13-15: The `dequeue` function removes the front element by popping it from the front of the dequeue.
+- **Line 17-20: The `front` function returns the first element in the queue. If the queue is empty, it throws an exception.
+- **Line 22-23: The `empty` function checks if the queue is empty.
+\end{lstlisting}
+
+
+\section{Palindrome Detection}
+
+The palindrome detection checks whether a string is the same forward and backward, ignoring spaces and capitalization. The following code was used:
+
+\begin{lstlisting}[language=C++, caption={Palindrome Detection Implementation}, numbers=left]
+bool isPalindrome(const std::string& str) {
+    std::stack<char> s;
+    std::queue<char> q;
+    
+    // Clean up the string: ignore spaces and case
+    for (char ch : str) {
+        if (isalpha(ch)) {
+            char lowerCh = tolower(ch);
+            s.push(lowerCh);
+            q.push(lowerCh);
+        }
+    }
+    
+    // Check if the stack and queue are equal
+    while (!s.empty()) {
+        if (s.top() != q.front()) {
+            return false;
+        }
+        s.pop();
+        q.pop();
+    }
+    return true;
+}
+
+
+**Explanation:
+- **Line 2-3: We initialize a stack and a queue. The stack will help reverse the order of characters while the queue maintains their original order.
+- **Line 6-10: Non-alphabetic characters are ignored, and alphabetic characters are added to both the stack and queue.
+- **Line 13-20: We compare characters from the top of the stack (last-in, first-out) and the front of the queue (first-in, first-out). If the characters differ at any point, the string is not a palindrome.
+\end{lstlisting}
+
+\section{Sorting Algorithms}
+
+\subsection{Selection Sort}
+
+Selection sort works by finding the smallest element from the unsorted part of the array and swapping it with the first unsorted element. Here’s the implementation:
+
+\begin{lstlisting}[language=C++, caption={Selection Sort Implementation}, numbers=left]
+int selectionSort(std::vector<std::string>& arr) {
+    int comparisons = 0;
+    std::size_t n = arr.size();  
+    
+    for (std::size_t i = 0; i < n - 1; ++i) {  
+        std::size_t minIndex = i;  
+        for (std::size_t j = i + 1; j < n; ++j) {  
+            comparisons++;  
+            if (arr[j] < arr[minIndex]) {
+                minIndex = j;  
+            }
+        }
+        std::swap(arr[i], arr[minIndex]);  
+    }
+    return comparisons;
+}
+
+
+**Explanation:**
+- **Line 4: The outer loop goes through the array, leaving one element unsorted each time.
+- **Line 6: The inner loop finds the smallest element.
+- **Line 10: The elements are swapped, ensuring the smallest element is placed in its correct position.
+\end{lstlisting}
+
+Selection sort is $\mathcal{O}(n^2)$ in both average and worst-case time complexity, since it always performs the same number of comparisons regardless of the initial ordering.
+
+
+\subsection{Insertion Sort}
+
+Insertion sort builds the sorted array one item at a time. The algorithm inserts each new element into the correct position within the sorted part of the array:
+
+\begin{lstlisting}[language=C++, caption={Insertion Sort Implementation}, numbers=left]
+int insertionSort(std::vector<std::string>& arr) {
+    int comparisons = 0;
+    std::size_t n = arr.size();  
+    
+    for (std::size_t i = 1; i < n; ++i) {  
+        std::string key = arr[i];
+        std::size_t j = i;
+        while (j > 0 && arr[j - 1] > key) {
+            arr[j] = arr[j - 1];
+            j--;
+            comparisons++;
+        }
+        arr[j] = key;
+        comparisons++;
+    }
+    return comparisons;
+}
+
+**Explanation:**
+- **Line 4: The loop iterates through the array starting from the second element.
+- **Line 7-9: The current element is compared to the sorted part of the array and inserted in the correct position.
+
+\end{lstlisting}
+
+Insertion sort is $\mathcal{O}(n^2)$ in the worst case but $\mathcal{O}(n)$ in the best case when the array is nearly sorted.
+
+\subsection{Merge Sort}
+
+
+\begin{lstlisting}[language=C++, caption={Merge Sort Implementation}, numbers=left]
+int merge(std::vector<std::string>& arr, std::vector<std::string>& temp, std::size_t left, std::size_t mid, std::size_t right) {
+    std::size_t i = left, j = mid + 1, k = left;
+    int comparisons = 0;
+
+    while (i <= mid && j <= right) {
+        comparisons++;
+        if (arr[i] <= arr[j]) {
+            temp[k++] = arr[i++];
+        } else {
+            temp[k++] = arr[j++];
+        }
+    }
+
+    while (i <= mid) {
+        temp[k++] = arr[i++];
+    }
+
+    while (j <= right) {
+        temp[k++] = arr[j++];
+    }
+
+    for (std::size_t m = left; m <= right; m++) {
+        arr[m] = temp[m];
+    }
+
+    return comparisons;
+}
+
+int mergeSortHelper(std::vector<std::string>& arr, std::vector<std::string>& temp, std::size_t left, std::size_t right) {
+    int comparisons = 0;
+
+    if (left < right) {
+        std::size_t mid = left + (right - left) / 2;
+        comparisons += mergeSortHelper(arr, temp, left, mid);    
+        comparisons += mergeSortHelper(arr, temp, mid + 1, right);  
+        comparisons += merge(arr, temp, left, mid, right);  
+    }
+
+    return comparisons;
+}
+
+int mergeSort(std::vector<std::string>& arr) {
+    std::vector<std::string> temp(arr.size());
+    return mergeSortHelper(arr, temp, 0, arr.size() - 1);
+}
+
+
+**Explanation:**
+- **Line 3-7: The `merge` function merges two sorted halves of the array into a temporary array. It also counts the comparisons made during the merge process.
+- **Line 20-24: After the merge, the remaining elements from the left and right halves are copied into the temporary array.
+- **Line 28: The `mergeSortHelper` function recursively splits the array into two halves and sorts them. It counts the comparisons during sorting and merging.
+- **Line 34-38: The `mergeSort` function initializes a temporary array and calls the helper function to start the merge sort process.
+\end{lstlisting}
+
+
+Merge sort’s time complexity is $\mathcal{O}(n \log n)$ due to the logarithmic number of recursive calls and the linear merging process.
+
+\subsection{Quick Sort}
+
+
+\begin{lstlisting}[language=C++, caption={Quick Sort Implementation}, numbers=left]
+// Partition function to partition the array around a pivot
+int partition(std::vector<std::string>& arr, std::size_t low, std::size_t high, int& comparisons) {
+    std::string pivot = arr[high];
+    std::size_t i = low;
+
+    for (std::size_t j = low; j < high; j++) {
+        comparisons++;
+        if (arr[j] <= pivot) {
+            std::swap(arr[i], arr[j]);  
+            i++;
+        }
+    }
+    std::swap(arr[i], arr[high]);  
+    return i;
+}
+
+// Helper function to recursively sort the array
+int quickSortHelper(std::vector<std::string>& arr, std::size_t low, std::size_t high) {
+    int comparisons = 0;
+
+    if (low < high && high < arr.size()) { 
+        std::size_t pi = partition(arr, low, high, comparisons); 
+        comparisons += quickSortHelper(arr, low, pi > 0 ? pi - 1 : 0); 
+        comparisons += quickSortHelper(arr, pi + 1, high);
+    }
+
+    return comparisons;
+}
+
+
+int quickSort(std::vector<std::string>& arr) {
+    return quickSortHelper(arr, 0, arr.size() - 1);
+}
+
+
+**Explanation:**
+- **Line 3-8: The `partition` function selects a pivot element, partitions the array such that elements smaller than the pivot are on its left, and elements larger are on its right. It also counts comparisons during this process.
+- **Line 11-17: The `quickSortHelper` function recursively applies Quick Sort on the left and right partitions, counting comparisons during sorting.
+- **Line 19-22: The `quickSort` function initiates the sorting process by calling the helper function with the full array.
+\end{lstlisting}
+
+**Explanation:**
+Quick sort has a average time complexity of $\mathcal{O}(n \log n)$.
+
+\subsection{Main Program}
+
+The main program reads a list of magic items from a file, checks for palindromes, and applies different sorting algorithms (Selection Sort, Insertion Sort, Merge Sort, and Quick Sort) to the data. For each sorting algorithm, the number of comparisons made is outputted.
+
+\begin{lstlisting}[language=C++, caption={Main Program}, numbers=left]
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <string>
+#include "Palindrome.h"
+#include "SortingAlgorithms.h"
+
+int main() {
+    std::ifstream inputFile("magicitems.txt");
+    if (!inputFile) {
+        std::cerr << "Error: Unable to open file magicitems.txt\n";
+        return 1;
+    }
+
+    std::vector<std::string> magicItems;
+    std::string line;
+
+    // Read each line from the input file into the vector
+    while (std::getline(inputFile, line)) {
+        magicItems.push_back(line);
+    }
+    inputFile.close();
+
+    // Check each line for palindrome and output if found
+    std::cout << "Palindromes in the file:\n";
+    for (const std::string& item : magicItems) {
+        if (isPalindrome(item)) {
+            std::cout << item << '\n';
+        }
+    }
+
+    // Step 3: Perform sorting and count comparisons for each algorithm
+    std::vector<std::string> itemsToSort;
+
+    // Selection Sort
+    itemsToSort = magicItems;  // Copy the original list
+    knuthShuffle(itemsToSort); // Shuffle the list before sorting
+    int selectionComparisons = selectionSort(itemsToSort);
+    std::cout << "Selection Sort comparisons: " << selectionComparisons << '\n';
+
+    // Insertion Sort
+    itemsToSort = magicItems;  // Reset the list to original
+    knuthShuffle(itemsToSort); // Shuffle the list before sorting
+    int insertionComparisons = insertionSort(itemsToSort);
+    std::cout << "Insertion Sort comparisons: " << insertionComparisons << '\n';
+
+    // Merge Sort
+    itemsToSort = magicItems;  // Reset the list to original
+    knuthShuffle(itemsToSort); // Shuffle the list before sorting
+    int mergeComparisons = mergeSort(itemsToSort);
+    std::cout << "Merge Sort comparisons: " << mergeComparisons << '\n';
+
+    // Quick Sort
+    itemsToSort = magicItems;  // Reset the list to original
+    knuthShuffle(itemsToSort); // Shuffle the list before sorting
+    int quickComparisons = quickSort(itemsToSort);
+    std::cout << "Quick Sort comparisons: " << quickComparisons << '\n';
+
+    return 0;
+}
+
+**Explanation:**
+- **Line 6: We open the file `magicitems.txt` which contains a list of magic items. If the file cannot be opened, the program outputs an error message and terminates.
+- **Line 12-16: The file contents are read line by line and stored in a `std::vector<std::string>`, which is a dynamic array of strings.
+- **Line 19-24: The code checks each item from the file to see if it is a palindrome using the `isPalindrome()` function from the included `"Palindrome.h"` header. If a palindrome is found, it is printed to the console.
+- **Lines 29-50: For each sorting algorithm (Selection Sort, Insertion Sort, Merge Sort, and Quick Sort), the following steps are executed:
+  - A copy of the original `magicItems` list is made.
+  - The list is shuffled using the `knuthShuffle()` function to ensure the data is unsorted before sorting.
+  - The sorting algorithm is applied, and the number of comparisons made during sorting is stored in a variable.
+  - The number of comparisons is then printed to the console.
+\end{lstlisting}
+
+
+
+\section{Performance Comparison}
+
+Multiple test runs were conducted. The average number of comparisons for each sort is shown below:
+
+\begin{center}
+\begin{tabular}{|c|c|}
+\hline
+Sorting Algorithm & Average Comparisons \\
+\hline
+Selection Sort & 221445 \\
+Insertion Sort & 111005 \\
+Merge Sort & 5428 \\
+Quick Sort & 6178 \\
+\hline
+\end{tabular}
+\end{center}
+
+\section{Conclusion}
+
+This document mainly presented the implementations and performance comparison of several sorting algorithms, with an included palindrome checking system. Merge sort ultimately performed the best with the least number of comparisons needed for every successful sort. 
+\end{document}
