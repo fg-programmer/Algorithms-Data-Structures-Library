@@ -2,13 +2,47 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <cstdlib>
-#include <ctime>
+#include <list>
 #include "Algorithms.h"
 
+const int TABLE_SIZE = 250;
+
+// Hash function
+int hashFunction(const std::string& key) {
+    int hash = 0;
+    for (char ch : key) {
+        hash = (37 * hash + ch) % TABLE_SIZE;
+    }
+    return hash;
+}
+
+// Hash Table Class with Chaining
+class HashTable {
+public:
+    HashTable() : table(TABLE_SIZE) {}
+
+    void insert(const std::string& key) {
+        int index = hashFunction(key);
+        table[index].emplace_back(key);
+    }
+
+    int retrieve(const std::string& key) {
+        int index = hashFunction(key);
+        int comparisons = 1;  // Initial comparison for accessing the bucket
+
+        for (const auto& item : table[index]) {
+            comparisons++;
+            if (item == key) return comparisons;
+        }
+        return comparisons;  // Return comparisons even if not found
+    }
+
+private:
+    std::vector<std::list<std::string>> table;
+};
 
 int main() {
-    // Step 1: Read items from magicitems.txt into a vector
+    // Load magic items from file
     std::ifstream inputFile("magicitems.txt");
     if (!inputFile) {
         std::cerr << "Error: Unable to open file magicitems.txt\n";
@@ -22,11 +56,16 @@ int main() {
     }
     inputFile.close();
 
-    // Step 2: Sort the array
+    // Sort the array for binary search
     mergeSort(magicItems);
 
+    // Initialize hash table and load it with magic items
+    HashTable hashTable;
+    for (const auto& item : magicItems) {
+        hashTable.insert(item);
+    }
 
-    // Step 3: Randomly select 42 items for searching
+// Step 3: Randomly select 42 items for searching
     std::srand(static_cast<unsigned int>(std::time(nullptr)));
     std::vector<std::string> searchItems;
     for (int i = 0; i < 42; ++i) {
@@ -58,6 +97,18 @@ int main() {
     
     std::cout << "Average Linear Search Comparisons: " << averageLinear << "\n";
     std::cout << "Average Binary Search Comparisons: " << averageBinary << "\n";
+
+
+    // Perform hash table retrieval and calculate comparisons
+    int totalHashComparisons = 0;
+    std::cout << "\nHash Table Retrieval Comparisons:\n";
+    for (const auto& item : searchItems) {
+        int comparisons = hashTable.retrieve(item);
+        totalHashComparisons += comparisons;
+        std::cout << "Comparisons for " << item << ": " << comparisons << "\n";
+    }
+    double avgHashComparisons = static_cast<double>(totalHashComparisons) / searchItems.size();
+    std::cout << "Average Hash Table Comparisons: " << avgHashComparisons << "\n";
 
     return 0;
 }
