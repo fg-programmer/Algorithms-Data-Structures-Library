@@ -1,20 +1,26 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <string>
 #include <list>
+#include <string>
+#include <cmath>
+#include <iomanip>
 #include "Algorithms.h"
 
 const int TABLE_SIZE = 250;
+const int LINES_IN_FILE = 666;
+const std::string FILE_NAME = "magicitems.txt";
+
 
 // Hash function
-int hashFunction(const std::string& key) {
-    int hash = 0;
-    for (char ch : key) {
-        hash = (37 * hash + ch) % TABLE_SIZE;
+int hashFunction(const std::string& str) {
+        int hash = 0;
+        for (char ch : str) {
+            hash += static_cast<int>(std::toupper(ch));
+        }
+        return (hash * 1) % TABLE_SIZE; 
     }
-    return hash;
-}
+
 
 // Hash Table Class with Chaining
 class HashTable {
@@ -35,6 +41,51 @@ public:
             if (item == key) return comparisons;
         }
         return comparisons;  // Return comparisons even if not found
+    }
+    void analyzeHashValues(const std::vector<std::string>& searchItems) {
+       std::vector<int> bucketCount(TABLE_SIZE, 0);
+        int totalComparisons = 0;
+        
+        std::cout << "Hash Table Retrieval for Selected Items:\n";
+        
+        // Count items in each relevant bucket and track comparisons for retrieval
+        for (const auto& item : searchItems) {
+            int index = hashFunction(item);
+            bucketCount[index]++;
+            int comparisons = retrieve(item);
+            totalComparisons += comparisons;
+            std::cout << "Hash: " << item << ", Comparisons: " << comparisons << "\n";
+        }
+
+       // Display bucket usage for the selected items only
+        int relevantBuckets = 0;
+        std::cout << "\nHash Table Usage for Selected Buckets:\n";
+        for (int i = 0; i < TABLE_SIZE; ++i) {
+            if (bucketCount[i] > 0) {
+                relevantBuckets++;
+                std::cout << std::setw(3) << i << " ";
+                for (int j = 0; j < bucketCount[i]; ++j) {
+                    std::cout << "*";
+                }
+                std::cout << " " << bucketCount[i] << "\n";
+            }
+        }
+
+        // Calculate and display average load and standard deviation for selected buckets
+        double averageLoad = static_cast<double>(totalComparisons) / searchItems.size();
+        std::cout << "\nAverage comparisons for selected items: "
+                  << std::fixed << std::setprecision(2) << averageLoad << "\n";
+
+        double sum = 0;
+        for (int count : bucketCount) {
+            if (count > 0) {
+                double deviation = count - averageLoad;
+                sum += deviation * deviation;
+            }
+        }
+        double stdDev = std::sqrt(sum / relevantBuckets);
+        std::cout << "Standard Deviation for selected buckets: "
+                  << std::fixed << std::setprecision(2) << stdDev << "\n";
     }
 
 private:
@@ -99,16 +150,7 @@ int main() {
     std::cout << "Average Binary Search Comparisons: " << averageBinary << "\n";
 
 
-    // Perform hash table retrieval and calculate comparisons
-    int totalHashComparisons = 0;
-    std::cout << "\nHash Table Retrieval Comparisons:\n";
-    for (const auto& item : searchItems) {
-        int comparisons = hashTable.retrieve(item);
-        totalHashComparisons += comparisons;
-        std::cout << "Comparisons for " << item << ": " << comparisons << "\n";
-    }
-    double avgHashComparisons = static_cast<double>(totalHashComparisons) / searchItems.size();
-    std::cout << "Average Hash Table Comparisons: " << avgHashComparisons << "\n";
+    hashTable.analyzeHashValues(searchItems);
 
     return 0;
 }
