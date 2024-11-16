@@ -60,3 +60,39 @@ public:
             std::cout << "\n";
         }
     }
+    void performDFS() {
+        std::cout << "Depth-First Traversal:\n";
+        std::vector<bool> visited(numVertices, false);
+        for (Node* node : linkedObjects) {
+            if (!visited[node->id - 1]) {
+                depthFirstTraversal(node, visited);
+            }
+        }
+        std::cout << "\n";
+    }
+
+    // BFS traversal for linked objects
+    void performBFS() {
+        std::cout << "Breadth-First Traversal:\n";
+        std::vector<bool> visited(numVertices, false);
+        for (Node* start : linkedObjects) {
+            if (!visited[start->id - 1]) {
+                std::queue<Node*> q;
+                q.push(start);
+                visited[start->id - 1] = true;
+                while (!q.empty()) {
+                    Node* node = q.front();
+                    q.pop();
+                    std::cout << node->id << " ";
+                    for (Node* neighbor : node->neighbors) {
+                        if (!visited[neighbor->id - 1]) {
+                            visited[neighbor->id - 1] = true;
+                            q.push(neighbor);
+                        }
+                    }
+                }
+            }
+        }
+        std::cout << "\n";
+    }
+};
