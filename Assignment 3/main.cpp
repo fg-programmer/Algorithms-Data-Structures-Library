@@ -18,3 +18,32 @@ int main() {
         std::istringstream iss(line);
         std::string command;
         iss >> command;
+        if (command == "new") {
+            std::string type;
+            iss >> type; //"graph"
+            int vertices; 
+            iss >> vertices;
+            graph = new Graph(vertices);
+        } else if (command == "add") {
+            std::string element;
+            iss >> element;
+            if (element == "vertex") {
+            } else if (element == "edge") {
+                int v1, v2;
+                iss >> v1 >> v2;
+                if (graph) {
+                    graph->addEdge(v1, v2);
+                }
+            }
+        }
+    }
+
+    if (graph) {
+        graph->printMatrix();
+        graph->printAdjList();
+        graph->performDFS();
+        graph->performBFS();
+    }
+
+    return 0;
+}
