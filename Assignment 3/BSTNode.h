@@ -1,5 +1,8 @@
 #include <iostream>
 #include <string>
+#include <string>
+#include <vector>
+
 
 class BSTNode {
 public:

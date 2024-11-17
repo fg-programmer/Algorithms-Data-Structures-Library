@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include "BSTNode.h"
+
 
 class BST {
 private:
@@ -49,4 +51,27 @@ bool searchSidekick(BSTNode* node, const std::string& value, std::string& path, 
         }
     }
      
+public:
+    BST() : root(nullptr) {}
+
+    void insert(const std::string& item) {
+        std::string path;
+        root = insert(root, item, path);
+    }
+
+    void printInOrder() const {
+        inOrderTraversal(root);
+        std::cout << std::endl;
+    }
+
+    void searchItem(const std::string& item) const {
+        std::string path;
+        int comp = 0;
+        if (search(root, item, path, comp)) {
+            std::cout << "Found " << item << " | Path: " << path << "| Comparisons: " << comp << std::endl;
+        } else {
+            std::cout << "Not Found " << item << " | Path: " << path << "| Comparisons: " << comp << std::endl;
+        }
+    }
+};
 

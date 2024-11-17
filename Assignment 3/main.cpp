@@ -4,45 +4,35 @@
 #include <list>
 #include <queue>
 #include <sstream>
-#include "Graph.h"
+#include "BST.h"
+#include "BSTNode.h"
 
 int main() {
-    std::ifstream file("graphs1.txt");
-    if (!file) {
-        std::cerr << "Error opening file.\n";
-        return 1;
-    }
-     std::string line;
-    Graph* graph = nullptr;
-    while (getline(file, line)) {
-        std::istringstream iss(line);
-        std::string command;
-        iss >> command;
-        if (command == "new") {
-            std::string type;
-            iss >> type; //"graph"
-            int vertices; 
-            iss >> vertices;
-            graph = new Graph(vertices);
-        } else if (command == "add") {
-            std::string element;
-            iss >> element;
-            if (element == "vertex") {
-            } else if (element == "edge") {
-                int v1, v2;
-                iss >> v1 >> v2;
-                if (graph) {
-                    graph->addEdge(v1, v2);
-                }
-            }
-        }
-    }
+    BST bst;
 
-    if (graph) {
-        graph->printMatrix();
-        graph->printAdjList();
-        graph->performDFS();
-        graph->performBFS();
+    // Read and insert from magicitems.txt
+    std::ifstream inputFile("magicitems.txt");
+    std::string item;
+    while (inputFile >> item) {
+        bst.insert(item);
+    }
+    inputFile.close();
+
+    // Print in-order traversal of BST
+    std::cout << "In-order Traversal of BST:" << std::endl;
+    bst.printInOrder();
+
+    // Search and lookup from magicitems-find-in-bst.txt
+    std::ifstream searchFile("magicitems-find-in-bst.txt");
+    std::vector<std::string> itemsToFind;
+    while (searchFile >> item) {
+        itemsToFind.push_back(item);
+    }
+    searchFile.close();
+
+    int totalComparisons = 0;
+    for (const auto& findItem : itemsToFind) {
+        bst.searchItem(findItem);
     }
 
     return 0;
