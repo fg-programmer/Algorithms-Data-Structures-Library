@@ -1,8 +1,11 @@
 #include <iostream>
-#include <string>
-#include <string>
+#include <fstream>
 #include <vector>
-
+#include <list>
+#include <queue>
+#include <sstream>
+#ifndef BSTNODE_H
+#define BSTNODE_H
 
 class BSTNode {
 public:
@@ -12,3 +15,4 @@ public:
 
     BSTNode(const std::string& value) : data(value), left(nullptr), right(nullptr) {}
 };
+#endif
