@@ -9,47 +9,50 @@ class BST {
 private:
     BSTNode* root;
 
-        // In-order traversal helper function using recursion
-    void inOrderSidekick(BSTNode* node) {
+    // Recursive in-order traversal
+    void inOrderSidekick(BSTNode* node) const {
         if (node != nullptr) {
             inOrderSidekick(node->left);
-            std::cout << node->data << "\n";
+            std::cout << node->data << " ";
             inOrderSidekick(node->right);
         }
     }
 
-    // Insert helper function using recursion
-    void insertSidekick(BSTNode*& node, const std::string& value, std::string& path) {
+
+    // Recursive insert helper
+      BSTNode* insert(BSTNode* node, const std::string& item, std::string& path) {
         if (node == nullptr) {
-            node = new BSTNode(value);
-            std::cout << "Insert Path '" << value << "': " << path << "\n";
-            return;
+            std::cout << "Insertion Path: " << path << std::endl;
+            return new BSTNode(item);
         }
-        if (value < node->data) {
+        if (item < node->data) {
             path += "L, ";
-            insertSidekick(node->left, value, path);
-        } else {
+            node->left = insert(node->left, item, path);
+        } else if (item > node->data) {
             path += "R, ";
-            insertSidekick(node->right, value, path);
+            node->right = insert(node->right, item, path);
         }
+        return node;
     }
+
+
     // Search helper function using recursion
-bool searchSidekick(BSTNode* node, const std::string& value, std::string& path, int& comp) {
+    bool search(BSTNode* node, const std::string& item, std::string& path, int& comp) const {
         if (node == nullptr) {
             return false;
         }
         comp++;
-        if (node->data == value) {
+        if (item == node->data) {
             return true;
-        }
-        if (value < node->data) {
+        } else if (item < node->data) {
             path += "L, ";
-            return searchSidekick(node->left, value, path, comp);
+            return search(node->left, item, path, comp);
         } else {
             path += "R, ";
-            return searchSidekick(node->right, value, path, comp);
+            return search(node->right, item, path, comp);
         }
     }
+
      
 public:
     BST() : root(nullptr) {}
@@ -58,9 +61,10 @@ public:
         std::string path;
         root = insert(root, item, path);
     }
+    
 
     void printInOrder() const {
-        inOrderTraversal(root);
+        inOrderSidekick(root);
         std::cout << std::endl;
     }
 
