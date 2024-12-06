@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <limits>
+#include <fstream>
 #include <unordered_map>
 #include <sstream>
 #include <string>
@@ -47,16 +48,16 @@ void bellmanFord(Graph& graph, int source) {
         }
     }
 
-    // Check for negative weight cycles
+    // Check negative weight cycles
     for (const Edge& edge : edges) {
         if (distance[edge.start] != numeric_limits<int>::max() &&
             distance[edge.start] + edge.weight < distance[edge.end]) {
-            cout << "Graph contains a negative weight cycle." << endl;
-            return;
+            cout << "Graph contains a negative weight cycle." << endl; 
+            break;
         }
     }
 
-        // Print results
+    // Print results for each vertex, even if there is a negative weight cycle
     for (int i = 1; i <= V; ++i) {
         if (distance[i] == numeric_limits<int>::max()) {
             cout << "Vertex " << i << " is not reachable from vertex " << source << "." << endl;
@@ -66,6 +67,8 @@ void bellmanFord(Graph& graph, int source) {
             for (int v = i; v != -1; v = predecessor[v]) {
                 path.insert(path.begin(), v);
             }
+
+            // Print the path in the format requested
             for (size_t j = 0; j < path.size(); ++j) {
                 cout << path[j];
                 if (j != path.size() - 1) cout << " --> ";
@@ -76,21 +79,32 @@ void bellmanFord(Graph& graph, int source) {
 }
 
 
-
-
-
 Graph parseGraph(const string& inputFile) {
     ifstream file(inputFile);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << inputFile << endl;
+        exit(1);
+    }
+
     string line;
     Graph* graph = nullptr;
+    int numVertices = 0;
+
     while (getline(file, line)) {
         istringstream iss(line);
         string command;
         iss >> command;
 
-        if (command == "new") {
-            int numVertices;
-            graph = new Graph(numVertices);
+        if (command == "new" && iss >> command && command == "graph") {
+            // Expect the next line to contain the number of vertices
+            if (getline(file, line)) {
+                istringstream numStream(line);
+                numStream >> numVertices;
+                graph = new Graph(numVertices);
+            } else {
+                cerr << "Error: Expected number of vertices after 'new graph' keyword." << endl;
+                exit(1);
+            }
         } else if (command == "add") {
             string type;
             iss >> type;
@@ -98,14 +112,24 @@ Graph parseGraph(const string& inputFile) {
             if (type == "vertex") {
                 int vertex;
                 iss >> vertex;
-                // Adding a vertex may not require an action for adjacency list
+                // No action needed for adding a vertex in the Graph class
             } else if (type == "edge") {
                 int start, end, weight;
                 char dash;
-                iss >> start >> dash >> end >> weight;
-                graph->addEdge(start, end, weight);
+                if (iss >> start >> dash >> end >> weight && dash == '-') {
+                    graph->addEdge(start, end, weight);
+                } else {
+                    cerr << "Error: Invalid edge format." << endl;
+                    exit(1);
+                }
             }
         }
     }
-    return *graph;
+
+    if (graph == nullptr) {
+        cerr << "Error: No graph data found in file." << endl;
+        exit(1);
+    }
+
+    return *graph; 
 }
