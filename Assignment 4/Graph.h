@@ -56,6 +56,26 @@ void bellmanFord(Graph& graph, int source) {
         }
     }
 
+        // Print results
+    for (int i = 1; i <= V; ++i) {
+        if (distance[i] == numeric_limits<int>::max()) {
+            cout << "Vertex " << i << " is not reachable from vertex " << source << "." << endl;
+        } else {
+            cout << "1 --> " << i << " cost is " << distance[i] << "; path: ";
+            vector<int> path;
+            for (int v = i; v != -1; v = predecessor[v]) {
+                path.insert(path.begin(), v);
+            }
+            for (size_t j = 0; j < path.size(); ++j) {
+                cout << path[j];
+                if (j != path.size() - 1) cout << " --> ";
+            }
+            cout << endl;
+        }
+    }
+}
+
+
 
 
 
@@ -75,3 +95,17 @@ Graph parseGraph(const string& inputFile) {
             string type;
             iss >> type;
 
+            if (type == "vertex") {
+                int vertex;
+                iss >> vertex;
+                // Adding a vertex may not require an action for adjacency list
+            } else if (type == "edge") {
+                int start, end, weight;
+                char dash;
+                iss >> start >> dash >> end >> weight;
+                graph->addEdge(start, end, weight);
+            }
+        }
+    }
+    return *graph;
+}
