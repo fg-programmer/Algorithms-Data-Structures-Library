@@ -7,7 +7,7 @@
 
 using namespace std;
 
-// Struct to store spice details
+// Structure to store spice details
 struct Spice {
     string name;
     int quantity;
@@ -35,14 +35,14 @@ void parseInput(const string& filename, vector<Spice>& spices, vector<int>& knap
         if (line.find("spice name") != string::npos) {
             string name;
             double total_price;
-            int qty;
+            int quantity;
             iss.ignore(15, '='); // Skip "spice name ="
             iss >> name;
             iss.ignore(20, '='); // Skip "total_price ="
             iss >> total_price;
-            iss.ignore(10, '='); // Skip "qty ="
-            iss >> qty;
-            spices.emplace_back(name, total_price, qty);
+            iss.ignore(10, '='); // Skip "quantity ="
+            iss >> quantity;
+            spices.emplace_back(name, total_price, quantity);
         }
 
         // Parse knapsack capacities
@@ -54,5 +54,29 @@ void parseInput(const string& filename, vector<Spice>& spices, vector<int>& knap
         }
     }
     file.close();
+}
+void fractionalKnapsack(const vector<Spice>& spices, vector<int>& knapsacks) {
+    vector<Spice> sorted_spices = spices;
+    // Sort spices by value per unit in descending order
+    sort(sorted_spices.begin(), sorted_spices.end(), [](const Spice& a, const Spice& b) {
+        return a.value_per_unit > b.value_per_unit;
+    });
+
+    for (int capacity : knapsacks) {
+        double total_value = 0.0;
+        cout << "Knapsack capacity: " << capacity << ":\n";
+        for (const Spice& spice : sorted_spices) {
+            if (capacity == 0) break;
+
+            int amnt_took = min(capacity, spice.quantity);
+            double val_taken = amnt_took * spice.value_per_unit;
+            total_value += val_taken;
+            capacity -= amnt_took;
+
+            cout << "  Took " << amnt_took << " of " << spice.name
+                 << " (value: " << fixed << setprecision(2) << val_taken << ")\n";
+        }
+        cout << "Total value in knapsack: " << fixed << setprecision(2) << total_value << "\n\n";
+    }
 }
 
