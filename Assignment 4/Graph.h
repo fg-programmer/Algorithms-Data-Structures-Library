@@ -88,7 +88,7 @@ Graph parseGraph(const string& inputFile) {
 
     string line;
     Graph* graph = nullptr;
-    int numVertices = 0;
+    unordered_map<int, bool> vertexSet; // Used to keep track of unique vertices
 
     while (getline(file, line)) {
         istringstream iss(line);
@@ -96,15 +96,8 @@ Graph parseGraph(const string& inputFile) {
         iss >> command;
 
         if (command == "new" && iss >> command && command == "graph") {
-            // Expect the next line to contain the number of vertices
-            if (getline(file, line)) {
-                istringstream numStream(line);
-                numStream >> numVertices;
-                graph = new Graph(numVertices);
-            } else {
-                cerr << "Error: Expected number of vertices after 'new graph' keyword." << endl;
-                exit(1);
-            }
+            // Graph initialization will be done after reading all vertices and edges
+            continue;
         } else if (command == "add") {
             string type;
             iss >> type;
@@ -112,11 +105,15 @@ Graph parseGraph(const string& inputFile) {
             if (type == "vertex") {
                 int vertex;
                 iss >> vertex;
-                // No action needed for adding a vertex in the Graph class
+                vertexSet[vertex] = true; // Mark vertex as seen
             } else if (type == "edge") {
                 int start, end, weight;
                 char dash;
                 if (iss >> start >> dash >> end >> weight && dash == '-') {
+                    // Make sure the edge is added to the graph
+                    if (!graph) {
+                        graph = new Graph(vertexSet.size()); // Initialize graph after parsing vertices
+                    }
                     graph->addEdge(start, end, weight);
                 } else {
                     cerr << "Error: Invalid edge format." << endl;
@@ -126,10 +123,9 @@ Graph parseGraph(const string& inputFile) {
         }
     }
 
-    if (graph == nullptr) {
-        cerr << "Error: No graph data found in file." << endl;
+    if (!graph) {
+        cerr << "Error: No graph was created." << endl;
         exit(1);
     }
-
-    return *graph; 
+    return *graph;
 }
