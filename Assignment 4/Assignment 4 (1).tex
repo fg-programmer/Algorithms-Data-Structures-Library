@@ -1,0 +1,429 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{amsmath}
+
+% Page layout
+\geometry{margin=1in}
+
+\definecolor{codebg}{RGB}{240, 150, 150}
+\definecolor{myblue}{RGB}{50, 100, 200}
+\definecolor{mygreen}{RGB}{0, 128, 0}
+\definecolor{myorange}{RGB}{255, 165, 0}
+\definecolor{myred}{RGB}{255, 0, 0}
+
+\lstset{
+    backgroundcolor=\color{codebg},
+    keywordstyle=\color{myblue}\bfseries,
+    commentstyle=\color{mygreen}\itshape,
+    stringstyle=\color{myorange},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    captionpos=b,
+    tabsize=2,
+}
+
+
+
+% Code formatting
+% Document Title
+\title{\color{myblue}Graph and Knapsack Project Documentation}
+\author{\color{mygreen}Fitsum Gelaye}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+This project implements two main functionalities:
+\begin{itemize}
+    \item Shortest Path calculation using the Bellman-Ford algorithm.
+    \item Fractional Knapsack problem for optimizing the selection of items.
+\end{itemize}
+It processes graph data and spice data from input files, performing calculations and outputting results. 
+
+\section{Graph Representation}
+The graph is implemented using an \texttt{Edge} class and a \texttt{Graph} class. The Bellman-Ford algorithm calculates the shortest path from a source vertex to all other vertices.
+
+\subsection{Edge Class}
+\begin{lstlisting}[language=C++, caption=Edge Class Definition]
+#ifndef EDGE_H
+#define EDGE_H
+
+class Edge {
+public:
+    int start, end, weight;
+    Edge(int s, int e, int w) : start(s), end(e), weight(w) {}
+};
+
+#endif 
+\end{lstlisting}
+
+\paragraph{Code Description:}
+\begin{itemize}
+    \item \textbf{Lines 4--9:} The \texttt{Edge} class encapsulates the structure of an edge, with three public members: \texttt{start}, \texttt{end}, and \texttt{weight}.
+    \item \textbf{Line 8:} Constructor initializes the edge's starting vertex, ending vertex, and weight.
+\end{itemize}
+
+\subsection{Graph Class}
+\begin{lstlisting}[language=C++, caption=Graph Class Definition]
+class Graph {
+private:
+    int numVertices;
+    vector<Edge> edges;
+
+public:
+    Graph(int vertices) : numVertices(vertices) {}
+
+    void addEdge(int start, int end, int weight) {
+        edges.push_back(Edge(start, end, weight));
+    }
+
+    vector<Edge>& getEdges() {
+        return edges;
+    }
+
+    int getNumVertices() {
+        return numVertices;
+    }
+};
+\end{lstlisting}
+
+\paragraph{Code Description:}
+\begin{itemize}
+    \item \textbf{Lines 1--4:} Declare private members, including the number of vertices \texttt{numVertices} and a vector of edges (\texttt{edges}).
+    \item \textbf{Lines 6--7:} Constructor initializes the graph with the specified number of vertices.
+    \item \textbf{Lines 9--11:} \texttt{addEdge} method adds an edge to the graph by constructing an \texttt{Edge} object and attaching it to the \texttt{edges} vector.
+    \item \textbf{Lines 13--14:} \texttt{getEdges} returns the list of edges.
+    \item \textbf{Lines 16--17:} \texttt{getNumVertices} retrieves the total number of vertices.
+\end{itemize}
+
+\subsection{Graph Parsing Function}
+\begin{lstlisting}[language=C++, caption=Graph Parsing Function]
+Graph parseGraph(const string& inputFile) {
+    ifstream file(inputFile);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << inputFile << endl;
+        exit(1);
+    }
+
+    string line;
+    Graph* graph = nullptr;
+    unordered_map<int, bool> vertexSet;
+
+    while (getline(file, line)) {
+        istringstream iss(line);
+        string command;
+        iss >> command;
+
+        if (command == "new" && iss >> command && command == "graph") {
+            continue;
+        } else if (command == "add") {
+            string type;
+            iss >> type;
+
+            if (type == "vertex") {
+                int vertex;
+                iss >> vertex;
+                vertexSet[vertex] = true;
+            } else if (type == "edge") {
+                int start, end, weight;
+                char dash;
+                if (iss >> start >> dash >> end >> weight && dash == '-') {
+                    if (!graph) {
+                        graph = new Graph(vertexSet.size());
+                    }
+                    graph->addEdge(start, end, weight);
+                } else {
+                    cerr << "Error: Invalid edge format." << endl;
+                    exit(1);
+                }
+            }
+        }
+    }
+
+    if (!graph) {
+        cerr << "Error: No graph was created." << endl;
+        exit(1);
+    }
+    return *graph;
+}
+\end{lstlisting}
+
+\paragraph{Code Description:}
+\begin{itemize}
+    \item \textbf{Lines 1--6:} Open the input file and check if it was successfully opened.
+    \item \textbf{Lines 8--10:} Declare a \texttt{Graph} pointer and an \texttt{unordered\_map} to track unique vertices.
+    \item \textbf{Lines 12--31:} Read each line from the input file:
+        \begin{itemize}
+            \item If the command is \texttt{"new graph"}, skip further processing for the line.
+            \item If the command is \texttt{"add vertex"}, extract the vertex number and add it to the vertex set.
+            \item If the command is \texttt{"add edge"}, extract edge details, initialize the graph if not already done, and add the edge.
+        \end{itemize}
+    \item \textbf{Lines 31--35:} If no graph was created by the end of file parsing, display an error and terminate.
+    \item \textbf{Line 36:} Return the created \texttt{Graph} object by dereferencing the pointer.
+\end{itemize}
+
+\section{Bellman-Ford Algorithm}
+\begin{lstlisting}[language=C++, caption=Bellman-Ford Algorithm]
+void bellmanFord(Graph& graph, int source) {
+    int V = graph.getNumVertices();
+    vector<Edge>& edges = graph.getEdges();
+    vector<int> distance(V + 1, numeric_limits<int>::max());
+    vector<int> predecessor(V + 1, -1);
+
+    distance[source] = 0;
+
+    for (int i = 1; i <= V - 1; ++i) {
+        for (const Edge& edge : edges) {
+            if (distance[edge.start] != numeric_limits<int>::max() &&
+                distance[edge.start] + edge.weight < distance[edge.end]) {
+                distance[edge.end] = distance[edge.start] + edge.weight;
+                predecessor[edge.end] = edge.start;
+            }
+        }
+    }
+
+    for (const Edge& edge : edges) {
+        if (distance[edge.start] != numeric_limits<int>::max() &&
+            distance[edge.start] + edge.weight < distance[edge.end]) {
+            cout << "Graph contains a negative weight cycle." << endl; 
+            break;
+        }
+    }
+
+    for (int i = 1; i <= V; ++i) {
+        if (distance[i] == numeric_limits<int>::max()) {
+            cout << "Vertex " << i << " is not reachable from vertex " << source << "." << endl;
+        } else {
+            cout << "1 --> " << i << " cost is " << distance[i] << "; path: ";
+            vector<int> path;
+            for (int v = i; v != -1; v = predecessor[v]) {
+                path.insert(path.begin(), v);
+            }
+
+            for (size_t j = 0; j < path.size(); ++j) {
+                cout << path[j];
+                if (j != path.size() - 1) cout << " --> ";
+            }
+            cout << endl;
+        }
+    }
+}
+\end{lstlisting}
+
+\paragraph{Code Description:}
+\begin{itemize}
+    \item \textbf{Lines 1--5:} Initialize variables for the number of vertices, edge list, distances, and predecessors.
+    \item \textbf{Line 7:} Set the distance to the source vertex as zero.
+    \item \textbf{Lines 9--15:} Relax edges up to \texttt{V-1} times. Update the distance and predecessor for each vertex if a shorter path is found.
+    \item \textbf{Lines 17--21:} Detect negative weight cycles by checking if further relaxation is possible.
+    \item \textbf{Lines 23--37:} Print the shortest distance and path for each vertex. Construct the path using the predecessor array.
+\end{itemize}
+\section{Spice Structure}
+The `Spice` struct represents the details of a single item, including its name, quantity, total price, and derived value per unit. 
+
+\subsection{Code}
+\begin{lstlisting}[language=C++, caption=Spice Structure Definition]
+struct Spice {
+    string name;
+    int quantity;
+    double total_price;
+    double value_per_unit;
+
+    Spice(string n, double tp, int q) : name(n), total_price(tp), quantity(q) {
+        value_per_unit = total_price / quantity;
+    }
+};
+\end{lstlisting}
+
+\subsection{Description}
+\begin{itemize}
+    \item \textbf{Lines 1--2:} Declare a structure to store details about spices.
+    \item \textbf{Lines 3--4:} Define member variables for the spice's name, quantity, total price, and value per unit.
+    \item \textbf{Lines 6--8:} Constructor initializes the `Spice` object with the provided name, total price, and quantity. It also calculates the `value\_per\_unit` by dividing the total price by the quantity.
+\end{itemize}
+\section{Input Parsing}
+The `parseInput` function reads the spice details and knapsack capacities from an input file. The function expects a specific format where spice details and knapsack capacities are defined on separate lines.
+
+\subsection{Code}
+\begin{lstlisting}[language=C++, caption=Input Parsing Function]
+void parseInput(const string& filename, vector<Spice>& spices, vector<int>& knapsack_capacities) {
+    ifstream file(filename);
+    if (!file.is_open()) {
+        cerr << "Error: Could not open file " << filename << endl;
+        exit(1);
+    }
+
+    string line;
+    while (getline(file, line)) {
+        istringstream iss(line);
+
+        // Parse spice details
+        if (line.find("spice name") != string::npos) {
+            string name;
+            double total_price;
+            int quantity;
+            iss.ignore(15, '='); // Skip "spice name ="
+            iss >> name;
+            iss.ignore(20, '='); // Skip "total_price ="
+            iss >> total_price;
+            iss.ignore(10, '='); // Skip "quantity ="
+            iss >> quantity;
+            spices.emplace_back(name, total_price, quantity);
+        }
+
+        // Parse knapsack capacities
+        if (line.find("knapsack capacity") != string::npos) {
+            int capacity;
+            iss.ignore(20, '='); // Skip "knapsack capacity ="
+            iss >> capacity;
+            knapsack_capacities.push_back(capacity);
+        }
+    }
+    file.close();
+}
+\end{lstlisting}
+\subsection{Description}
+\begin{itemize}
+    \item \textbf{Lines 1--4:} Open the input file for reading. If the file cannot be opened, an error message is displayed and the program exits.
+    \item \textbf{Lines 6--24:} Loop through each line in the file:
+    \begin{itemize}
+        \item If the line contains "spice name", parse the name, total price, and quantity of a spice.
+        \item Add the parsed spice to the `spices` vector.
+    \end{itemize}
+    \item \textbf{Lines 25--29:} If the line contains "knapsack capacity", parse the capacity and add it to the `knapsack\_capacities` vector.
+    \item \textbf{Line 31:} Close the file.
+\end{itemize}
+\section{Fractional Knapsack Algorithm}
+The `fractionalKnapsack` function distributes spices into knapsacks to maximize total value. It selects items based on their value per unit, filling each knapsack until its capacity is reached.
+
+\subsection{Code}
+\begin{lstlisting}[language=C++, caption=Fractional Knapsack Algorithm]
+void fractionalKnapsack(const vector<Spice>& spices, vector<int>& knapsacks) {
+    vector<Spice> sorted_spices = spices;
+    // Sort spices by value per unit in descending order
+    sort(sorted_spices.begin(), sorted_spices.end(), [](const Spice& a, const Spice& b) {
+        return a.value_per_unit > b.value_per_unit;
+    });
+
+    for (int capacity : knapsacks) {
+        double total_value = 0.0;
+        cout << "Knapsack capacity: " << capacity << ":\n";
+        for (const Spice& spice : sorted_spices) {
+            if (capacity == 0) break;
+
+            int amnt_took = min(capacity, spice.quantity);
+            double val_taken = amnt_took * spice.value_per_unit;
+            total_value += val_taken;
+            capacity -= amnt_took;
+
+            cout << "  Took " << amnt_took << " of " << spice.name
+                 << " (value: " << fixed << setprecision(2) << val_taken << ")\n";
+        }
+        cout << "Total value in knapsack: " << fixed << setprecision(2) << total_value << "\n\n";
+    }
+}
+\end{lstlisting}
+
+\subsection{Description}
+\begin{itemize}
+    \item \textbf{Lines 1--3:} Copy the `spices` vector into `sorted\_spices` and sort it in descending order by `value\_per\_unit`.
+    \item \textbf{Lines 5--17:} For each knapsack:
+    \begin{itemize}
+        \item Loop through the sorted spices and take as much as possible without exceeding the knapsack's capacity.
+        \item Update the total value of the knapsack based on the amount of spice taken.
+        \item Print details about the amount of spice taken and the corresponding value.
+    \end{itemize}
+    \item \textbf{Lines 18--19:} Print the total value of all spices placed in the current knapsack.
+\end{itemize}
+\section{Results and Discussion}
+\subsection{Graph Analysis}
+Running the Bellman-Ford algorithm on the CLRS and class example graph from the input file produced the following paths and costs:
+\begin{verbatim}
+1 --> 1 cost is 0; path: 1
+1 --> 2 cost is 2; path: 1 --> 4 --> 3 --> 2
+1 --> 3 cost is 4; path: 1 --> 4 --> 3
+1 --> 4 cost is 7; path: 1 --> 4
+1 --> 5 cost is -2; path: 1 --> 4 --> 3 --> 2 --> 5
+\end{verbatim}
+
+\subsection{Knapsack Analysis}
+The Fractional Knapsack algorithm produced the following results:
+\begin{verbatim}
+Knapsack capacity: 1:
+Took 1 of orange; (value: 9.00)
+Total value in knapsack: 9.00
+
+Knapsack capacity: 6:
+Took 2 of orange; (value: 18.00)
+Took 4 of blue; (value: 20.00)
+Total value in knapsack: 38.00
+
+Knapsack capacity: 10:
+Took 2 of orange; (value: 18.00)
+Took 8 of blue; (value: 40.00)
+Total value in knapsack: 58.00
+
+Knapsack capacity: 20:
+Took 2 of orange; (value: 18.00)
+Took 8 of blue; (value: 40.00)
+Took 6 of green; (value: 12.00)
+Took 4 of red; (value: 4.00)
+Total value in knapsack: 74.00
+
+Knapsack capacity: 21:
+Took 2 of orange; (value: 18.00)
+Took 8 of blue; (value: 40.00)
+Took 6 of green; (value: 12.00)
+Took 4 of red; (value: 4.00)
+Total value in knapsack: 74.00
+
+\end{verbatim}
+
+The algorithm successfully maximized the total value in each knapsack by selecting items with the highest value per unit.
+
+\subsection{Single-Source Shortest Path (SSSP) using Bellman-Ford Algorithm}
+
+\subsubsection{Bellman Ford Description}
+The Bellman-Ford algorithm works as follows:
+\begin{enumerate}
+    \item \textbf{Initialization:} Set the distance of the source vertex to 0 and all other vertices to infinity.
+    \item \textbf{Edge Relaxation:} Repeat $V-1$ times (where $V$ is the number of vertices), and for each edge $(u, v)$ with weight $w$, update the distance to vertex $v$ if the distance to $u + w$ is less than the current distance to $v$.
+    \item \textbf{Negative Cycle Detection:} After $V-1$ iterations, check all edges again. If any distance can still be updated, there is a negative-weight cycle.
+\end{enumerate}
+
+\subsubsection{Running Time Derivation}
+The Bellman-Ford algorithm's time complexity is $O(V \cdot E)$, where:
+\begin{itemize}
+    \item $V$ is the number of vertices in the graph.
+    \item $E$ is the number of edges in the graph.
+\end{itemize}
+
+
+\subsection{Running Time Analysis for Fractional Knapsack}
+\begin{itemize}
+    \item \textbf{Sorting:} The spices are sorted by their value per unit, which takes $O(N \log N)$, where $N$ is the number of spices.
+    \item \textbf{Knapsack Filling:} For each knapsack, the algorithm iterates through the spices and performs constant-time operations for each spice. This step takes $O(M \cdot N)$, where $M$ is the number of knapsacks.
+    \item \textbf{Overall Time Complexity:} The overall time complexity is $O(N \log N + M \cdot N)$. 
+\end{itemize}
+
+This complexity arises because the algorithm must sort the items before iterating through them to select the most valuable items.
+
+
+\end{document}
+
+
+
+
+\end{document}
